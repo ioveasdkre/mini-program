@@ -17,13 +17,7 @@
       正在載入假日資料...
     </v-alert>
 
-    <v-alert
-      v-if="holidayError"
-      type="warning"
-      variant="tonal"
-      class="mb-4"
-      closable
-      @click:close="holidayError = null">
+    <v-alert v-if="holidayError" type="warning" variant="tonal" class="mb-4">
       {{ holidayError }}
     </v-alert>
 
@@ -105,8 +99,16 @@
             v-for="(day, index) in calendarDays"
             :key="index"
             :color="getDayColor(day)"
-            :variant="day.isCurrentPeriod ? 'elevated' : 'outlined'"
-            class="calendar-day text-center">
+            :variant="day.isCurrentPeriod ? 'elevated' : 'elevated'"
+            :elevation="day.isCurrentPeriod ? 2 : 1"
+            :class="[
+              'calendar-day text-center',
+              {
+                'non-current-period': !day.isCurrentPeriod,
+                'focused-day': isFocused(day),
+              },
+            ]"
+            @click="focusDay(day)">
             <v-card-text class="pa-2">
               <div class="font-weight-medium">{{ day.date }}</div>
               <div v-if="day.isWorkDay" class="text-caption text-green-darken-2 mt-1">
@@ -115,10 +117,7 @@
               </div>
               <div v-else-if="day.isHoliday" class="text-caption text-red-darken-2 mt-1">
                 <v-icon size="small" color="red-darken-2"> mdi-home </v-icon>
-                <div
-                  v-if="day.holidayDescription"
-                  class="font-weight-medium text-xs mt-1"
-                  style="line-height: 1.2">
+                <div v-if="day.holidayDescription" class="holiday-text">
                   {{ day.holidayDescription }}
                 </div>
               </div>
@@ -138,9 +137,9 @@
                 <v-icon start>mdi-home</v-icon>
                 假日
               </v-chip>
-              <v-chip color="grey-lighten-3" variant="outlined">
-                <v-icon start>mdi-calendar-blank</v-icon>
-                非本週期
+              <v-chip color="white" variant="outlined" class="grey-border">
+                <v-icon start color="grey">mdi-calendar-blank</v-icon>
+                <span class="text-grey">非本週期</span>
               </v-chip>
             </div>
           </v-col>
@@ -233,13 +232,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { useQuery } from '@tanstack/vue-query';
 
 // 響應式數據
 const selectedDate = ref(new Date());
-const holidaysCache = ref<Record<string, Record<string, string>>>({});
-const loadingHolidays = ref(false);
-const holidayError = ref<string | null>(null);
+const focusedDate = ref<Date | null>(null);
 
 // 基礎數據
 const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
@@ -254,6 +251,146 @@ interface CalendarDay {
   cumulativeHours: number;
   holidayDescription?: string;
 }
+
+// 假日資料獲取函數
+const fetchHolidays = async (year: number): Promise<Record<string, string>> => {
+  const response = await fetch(
+    `https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${year}.json`,
+  );
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  // 將 API 回傳的日期格式轉換為 MM-dd 格式，並儲存描述
+  const holidays: Record<string, string> = {};
+
+  if (Array.isArray(data)) {
+    for (const item of data) {
+      if (item && typeof item === 'object' && 'date' in item && 'isHoliday' in item) {
+        const dateItem = item as { date: string; isHoliday: boolean; description?: string };
+        if (dateItem.isHoliday && dateItem.date) {
+          // 將 YYYYMMDD 格式轉換為 MM-DD
+          const dateStr = dateItem.date;
+          if (dateStr.length === 8) {
+            const month = dateStr.substring(4, 6);
+            const day = dateStr.substring(6, 8);
+            const monthDay = `${month}-${day}`;
+            holidays[monthDay] = dateItem.description || '假日';
+          }
+        }
+      }
+    }
+  }
+
+  return holidays;
+};
+
+// 工具函數
+const getPeriodForDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+
+  let startDate: Date, endDate: Date;
+
+  if (day >= 21) {
+    // 如果日期 >= 21，本月21日到下月20日
+    startDate = new Date(year, month, 21);
+    endDate = new Date(year, month + 1, 20);
+  } else {
+    // 如果日期 < 21，上月21日到本月20日
+    startDate = new Date(year, month - 1, 21);
+    endDate = new Date(year, month, 20);
+  }
+
+  return {
+    startDate,
+    endDate,
+    start: formatDate(startDate),
+    end: formatDate(endDate),
+  };
+};
+
+const formatDate = (date: Date) => {
+  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(
+    date.getDate(),
+  ).padStart(2, '0')}`;
+};
+
+// 獲取需要載入的年份
+const getRequiredYears = (date: Date) => {
+  const period = getPeriodForDate(date);
+  const startYear = period.startDate.getFullYear();
+  const endYear = period.endDate.getFullYear();
+  return Array.from(new Set([startYear, endYear]));
+};
+
+// 使用 Vue Query 獲取假日資料
+const requiredYears = computed(() => getRequiredYears(selectedDate.value));
+
+// 預先創建所有可能需要的年份查詢（當前年份和前後一年）
+const currentYear = new Date().getFullYear();
+const yearsToLoad = [currentYear - 1, currentYear, currentYear + 1];
+
+// 為每個年份創建查詢
+const holidayQueries = yearsToLoad.map(year =>
+  useQuery({
+    queryKey: ['holidays', year],
+    queryFn: () => fetchHolidays(year),
+    staleTime: 1000 * 60 * 60 * 24, // 24 小時
+    retry: 2,
+  }),
+);
+
+// 創建假日資料的對應表
+const holidayDataMap = computed(() => {
+  const map = new Map<number, Record<string, string>>();
+
+  holidayQueries.forEach((query, index) => {
+    const year = yearsToLoad[index];
+    if (year !== undefined && query.data.value) {
+      map.set(year, query.data.value);
+    }
+  });
+
+  return map;
+});
+
+// 合併所需年份的假日資料
+const allHolidays = computed(() => {
+  const merged: Record<string, string> = {};
+  const needed = requiredYears.value;
+
+  for (const year of needed) {
+    const yearData = holidayDataMap.value.get(year);
+    if (yearData) {
+      Object.assign(merged, yearData);
+    }
+  }
+
+  return merged;
+});
+
+// 載入狀態和錯誤
+const loadingHolidays = computed(() => {
+  const needed = requiredYears.value;
+  return holidayQueries.some((query, index) => {
+    const year = yearsToLoad[index];
+    return year !== undefined && needed.includes(year) && query.isLoading.value;
+  });
+});
+
+const holidayError = computed(() => {
+  const needed = requiredYears.value;
+  const errorQuery = holidayQueries.find((query, index) => {
+    const year = yearsToLoad[index];
+    return year !== undefined && needed.includes(year) && query.error.value;
+  });
+  return errorQuery?.error.value?.message || null;
+});
 
 // 計算屬性
 const currentPeriod = computed(() => {
@@ -367,88 +504,6 @@ const averageWeeklyHours = computed(() => {
   return Math.round(requiredHours.value / weeks);
 });
 
-// API 相關方法
-const fetchHolidays = async (year: number): Promise<Record<string, string>> => {
-  // 檢查快取
-  if (holidaysCache.value[year]) {
-    return holidaysCache.value[year];
-  }
-
-  try {
-    loadingHolidays.value = true;
-    holidayError.value = null;
-
-    const response = await fetch(
-      `https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${year}.json`,
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    // 將 API 回傳的日期格式轉換為 MM-dd 格式，並儲存描述
-    const holidays: Record<string, string> = {};
-
-    if (Array.isArray(data)) {
-      for (const item of data) {
-        if (item && typeof item === 'object' && 'date' in item && 'isHoliday' in item) {
-          const dateItem = item as { date: string; isHoliday: boolean; description?: string };
-          if (dateItem.isHoliday && dateItem.date) {
-            // 將 YYYYMMDD 格式轉換為 MM-DD
-            const dateStr = dateItem.date;
-            if (dateStr.length === 8) {
-              const month = dateStr.substring(4, 6);
-              const day = dateStr.substring(6, 8);
-              const monthDay = `${month}-${day}`;
-              holidays[monthDay] = dateItem.description || '假日';
-            }
-          }
-        }
-      }
-    }
-
-    // 存入快取
-    holidaysCache.value[year] = holidays;
-    return holidays;
-  } catch (error) {
-    console.error(`Failed to fetch holidays for ${year}:`, error);
-    holidayError.value = `無法載入 ${year} 年假日資料`;
-
-    // 回傳空物件作為後備方案
-    return {};
-  } finally {
-    loadingHolidays.value = false;
-  }
-};
-
-// 方法
-const getPeriodForDate = (date: Date) => {
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const day = date.getDate();
-
-  let startDate: Date, endDate: Date;
-
-  if (day >= 21) {
-    // 如果日期 >= 21，本月21日到下月20日
-    startDate = new Date(year, month, 21);
-    endDate = new Date(year, month + 1, 20);
-  } else {
-    // 如果日期 < 21，上月21日到本月20日
-    startDate = new Date(year, month - 1, 21);
-    endDate = new Date(year, month, 20);
-  }
-
-  return {
-    startDate,
-    endDate,
-    start: formatDate(startDate),
-    end: formatDate(endDate),
-  };
-};
-
 const isWorkingDay = (date: Date) => {
   // 週六日不是工作日
   const dayOfWeek = date.getDay();
@@ -464,7 +519,6 @@ const isHolidayDay = (date: Date) => {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   const dateString = `${month}-${day}`;
-  const year = date.getFullYear();
 
   // 檢查週末
   const dayOfWeek = date.getDay();
@@ -472,25 +526,16 @@ const isHolidayDay = (date: Date) => {
     return true;
   }
 
-  // 檢查假日列表（從快取中獲取）
-  const yearHolidays = holidaysCache.value[year] || {};
-  return dateString in yearHolidays;
+  // 檢查假日列表（使用 Vue Query 資料）
+  return dateString in allHolidays.value;
 };
 
 const getHolidayDescription = (date: Date): string | null => {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   const dateString = `${month}-${day}`;
-  const year = date.getFullYear();
 
-  const yearHolidays = holidaysCache.value[year] || {};
-  return yearHolidays[dateString] || null;
-};
-
-const formatDate = (date: Date) => {
-  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(
-    date.getDate(),
-  ).padStart(2, '0')}`;
+  return allHolidays.value[dateString] || null;
 };
 
 const formatPeriod = (date: Date) => {
@@ -507,7 +552,7 @@ const getDaysRemaining = () => {
 
 const getDayColor = (day: CalendarDay) => {
   if (!day.isCurrentPeriod) {
-    return 'grey-lighten-4';
+    return 'white';
   }
 
   if (day.isWorkDay) {
@@ -531,37 +576,28 @@ const nextMonth = () => {
   selectedDate.value = newDate;
 };
 
-// 載入指定年份的假日資料
-const loadHolidaysForYear = async (year: number) => {
-  await fetchHolidays(year);
-};
-
-// 載入當前週期相關的假日資料
-const loadHolidaysForCurrentPeriod = async () => {
-  const period = selectedPeriod.value;
-  const startYear = period.startDate.getFullYear();
-  const endYear = period.endDate.getFullYear();
-
-  // 載入開始年份和結束年份的假日資料
-  await loadHolidaysForYear(startYear);
-  if (startYear !== endYear) {
-    await loadHolidaysForYear(endYear);
+// 聚焦功能
+const focusDay = (day: CalendarDay) => {
+  // 如果點擊的是已經聚焦的日期，則取消聚焦
+  if (isFocused(day)) {
+    focusedDate.value = null;
+  } else {
+    focusedDate.value = new Date(day.fullDate);
   }
 };
 
-// 監聽選中日期變化，載入相關假日資料
-watch(
-  selectedDate,
-  async () => {
-    await loadHolidaysForCurrentPeriod();
-  },
-  { immediate: false },
-);
+const isFocused = (day: CalendarDay): boolean => {
+  if (!focusedDate.value) return false;
 
-// 組件掛載時載入初始假日資料
-onMounted(async () => {
-  await loadHolidaysForCurrentPeriod();
-});
+  const focused = focusedDate.value;
+  const dayDate = day.fullDate;
+
+  return (
+    focused.getDate() === dayDate.getDate() &&
+    focused.getMonth() === dayDate.getMonth() &&
+    focused.getFullYear() === dayDate.getFullYear()
+  );
+};
 </script>
 
 <style scoped>
@@ -593,11 +629,106 @@ onMounted(async () => {
   aspect-ratio: 1;
   min-height: 90px;
   cursor: pointer;
-  transition: transform 0.2s ease-in-out;
+  transition: all 0.2s ease-in-out;
+  position: relative;
 }
 
-.calendar-day:hover {
+.calendar-day:hover:not(.focused-day) {
   transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.calendar-day:active {
+  transform: scale(0.98);
+}
+
+.non-current-period {
+  border: 1px solid rgb(158, 158, 158) !important;
+  opacity: 1;
+}
+
+/* 非本週期 hover 效果 - 與其他格子相同 */
+.non-current-period:hover:not(.focused-day) {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+.non-current-period:hover:not(.focused-day) .v-card-text {
+  color: rgb(66, 66, 66) !important;
+}
+
+.non-current-period:hover:not(.focused-day) .font-weight-medium {
+  color: rgb(33, 33, 33) !important;
+}
+
+.non-current-period .v-card-text {
+  color: rgb(117, 117, 117) !important;
+}
+
+.non-current-period .font-weight-medium {
+  font-weight: 500 !important;
+  color: rgb(97, 97, 97) !important;
+}
+
+.non-current-period .v-icon {
+  color: rgb(158, 158, 158) !important;
+}
+
+.non-current-period .text-caption {
+  color: rgb(117, 117, 117) !important;
+}
+
+.grey-border {
+  border-color: rgb(158, 158, 158) !important;
+}
+
+.text-grey {
+  color: rgb(117, 117, 117) !important;
+}
+
+/* 假日文字樣式 */
+.holiday-text {
+  font-size: 0.7rem !important;
+  font-weight: 500;
+  line-height: 1.1;
+  margin-top: 2px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-height: 28px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* 聚焦日期樣式 */
+.focused-day {
+  border: 3px solid #1976d2 !important;
+  box-shadow:
+    0 0 0 1px #1976d2,
+    0 4px 12px rgba(25, 118, 210, 0.3) !important;
+  transform: scale(1.05);
+  z-index: 10;
+  transition: all 0.2s ease-in-out;
+}
+
+.focused-day .v-card-text {
+  padding: 6px 8px !important;
+}
+
+/* 非本週期且聚焦的樣式 - 與其他格子相同 */
+.non-current-period.focused-day {
+  background-color: rgba(25, 118, 210, 0.05) !important;
+}
+
+.non-current-period.focused-day .v-card-text {
+  color: rgb(66, 66, 66) !important;
+}
+
+.non-current-period.focused-day .font-weight-medium {
+  color: rgb(33, 33, 33) !important;
+  font-weight: 600 !important;
 }
 
 .stats-grid {

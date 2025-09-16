@@ -3,7 +3,7 @@
     <v-app-bar app color="primary" dark height="64">
       <v-app-bar-title>
         <v-icon left> mdi-clock </v-icon>
-        工時管理系統
+        陳俊生小程式工具平台
       </v-app-bar-title>
 
       <v-spacer />

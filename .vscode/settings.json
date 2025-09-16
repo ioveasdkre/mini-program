@@ -10,6 +10,7 @@
     "Nuxt",
     "vueuse",
     "vuetify",
+    "tanstack",
   ],
   "todo-tree.regex.regex": "((//|#|<!--|;|/\\*|^)\\s*($TAGS):|^\\s*- \\[ \\])",
   "todo-tree.general.tags": [

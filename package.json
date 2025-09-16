@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@nuxt/eslint": "1.9.0",
+    "@tanstack/vue-query": "^5.87.4",
     "eslint": "^9.35.0",
     "nuxt": "^4.1.2",
     "vue": "^3.5.21",
