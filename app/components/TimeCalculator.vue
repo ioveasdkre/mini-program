@@ -454,9 +454,10 @@ const calendarDays = computed((): CalendarDay[] => {
   }
 
   // 補足到完整的週
-  while (days.length % 7 !== 0) {
+  const daysToAdd = days.length % 7 === 0 ? 0 : 7 - (days.length % 7);
+  for (let i = 1; i <= daysToAdd; i++) {
     const nextDate = new Date(endDate);
-    nextDate.setDate(endDate.getDate() + ((days.length % 7) - 6));
+    nextDate.setDate(endDate.getDate() + i);
     days.push({
       date: nextDate.getDate(),
       isCurrentPeriod: false,
