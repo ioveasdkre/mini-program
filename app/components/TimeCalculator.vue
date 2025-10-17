@@ -1,234 +1,232 @@
 <template>
-  <div class="time-calculator-container">
-    <!-- 標題區塊 -->
-    <div class="text-center mb-8">
-      <h1 class="text-h3 font-weight-bold text-grey-darken-3 mb-2">
-        <v-icon size="large" color="primary" class="mr-3"> mdi-clock </v-icon>
-        工時計算器
-      </h1>
-      <p class="text-h6 text-grey-darken-1">計算每月需要的工作時數（21日-20日週期）</p>
-    </div>
-
-    <!-- 載入狀態和錯誤提示 -->
-    <v-alert v-if="loadingHolidays" type="info" variant="tonal" class="mb-4" icon="mdi-loading">
-      <template #prepend>
-        <v-progress-circular indeterminate size="20" />
-      </template>
-      正在載入假日資料...
-    </v-alert>
-
-    <v-alert v-if="holidayError" type="warning" variant="tonal" class="mb-4">
-      {{ holidayError }}
-    </v-alert>
-
-    <!-- 當前週期資訊 -->
-    <v-card class="mb-6" elevation="3">
-      <v-card-text>
-        <div class="period-info-grid">
-          <!-- 當前週期 -->
-          <v-card color="blue-lighten-5" class="text-center pa-4">
-            <v-card-title class="text-h6 text-blue-darken-2 mb-2"> 當前週期 </v-card-title>
-            <v-card-text>
-              <p class="text-blue-darken-1 text-h6">
-                {{ currentPeriod.start }} - {{ currentPeriod.end }}
-              </p>
-              <p class="text-caption text-grey-darken-1 mt-2">{{ getDaysRemaining() }}天後重置</p>
-            </v-card-text>
-          </v-card>
-
-          <!-- 需要工時 -->
-          <v-card color="green-lighten-5" class="text-center pa-4">
-            <v-card-title class="text-h6 text-green-darken-2 mb-2"> 需要工時 </v-card-title>
-            <v-card-text>
-              <p class="text-h3 font-weight-bold text-green-darken-1">{{ requiredHours }}</p>
-              <p class="text-caption text-grey-darken-1">小時</p>
-            </v-card-text>
-          </v-card>
-
-          <!-- 工作天數 -->
-          <v-card color="orange-lighten-5" class="text-center pa-4">
-            <v-card-title class="text-h6 text-orange-darken-2 mb-2"> 工作天數 </v-card-title>
-            <v-card-text>
-              <p class="text-h3 font-weight-bold text-orange-darken-1">{{ workingDays }}</p>
-              <p class="text-caption text-grey-darken-1">天</p>
-            </v-card-text>
-          </v-card>
-        </div>
-      </v-card-text>
-    </v-card>
-
-    <!-- 詳細日曆 -->
-    <v-card class="mb-6" elevation="3">
-      <v-card-title>
-        <v-icon color="primary" class="mr-2"> mdi-calendar </v-icon>
-        工作日曆
-      </v-card-title>
-
-      <v-card-text>
-        <!-- 月份選擇 -->
-        <div class="month-navigation mb-4 d-flex justify-space-between align-center">
-          <v-btn
-            color="primary"
-            variant="elevated"
-            prepend-icon="mdi-chevron-left"
-            @click="previousMonth">
-            上月
-          </v-btn>
-          <h3 class="text-h5 font-weight-medium">{{ formatPeriod(selectedDate) }}</h3>
-          <v-btn
-            color="primary"
-            variant="elevated"
-            append-icon="mdi-chevron-right"
-            @click="nextMonth">
-            下月
-          </v-btn>
-        </div>
-
-        <!-- 日曆網格 -->
-        <div class="calendar-grid mb-4">
-          <!-- 星期標題 -->
-          <div
-            v-for="day in weekDays"
-            :key="day"
-            class="calendar-header text-center font-weight-bold text-grey-darken-2 py-2">
-            {{ day }}
-          </div>
-
-          <!-- 日期格子 -->
-          <v-card
-            v-for="(day, index) in calendarDays"
-            :key="index"
-            :color="getDayColor(day)"
-            :variant="day.isCurrentPeriod ? 'elevated' : 'elevated'"
-            :elevation="day.isCurrentPeriod ? 2 : 1"
-            :class="[
-              'calendar-day text-center',
-              {
-                'non-current-period': !day.isCurrentPeriod,
-                'focused-day': isFocused(day),
-              },
-            ]"
-            @click="focusDay(day)">
-            <v-card-text class="pa-2">
-              <div class="font-weight-medium">{{ day.date }}</div>
-              <div v-if="day.isWorkDay" class="text-caption text-green-darken-2 mt-1">
-                <v-icon size="small" color="green-darken-2"> mdi-briefcase </v-icon>
-                <div class="font-weight-bold">{{ day.cumulativeHours }}h</div>
-              </div>
-              <div v-else-if="day.isHoliday" class="text-caption text-red-darken-2 mt-1">
-                <v-icon size="small" color="red-darken-2"> mdi-home </v-icon>
-                <div v-if="day.holidayDescription" class="holiday-text">
-                  {{ day.holidayDescription }}
-                </div>
-              </div>
-            </v-card-text>
-          </v-card>
-        </div>
-
-        <!-- 圖例 -->
-        <v-row class="mt-4">
-          <v-col cols="12">
-            <div class="d-flex flex-wrap ga-4">
-              <v-chip color="green-lighten-3" variant="outlined">
-                <v-icon start>mdi-briefcase</v-icon>
-                工作日
-              </v-chip>
-              <v-chip color="red-lighten-3" variant="outlined">
-                <v-icon start>mdi-home</v-icon>
-                假日
-              </v-chip>
-              <v-chip color="white" variant="outlined" class="grey-border">
-                <v-icon start color="grey">mdi-calendar-blank</v-icon>
-                <span class="text-grey">非本週期</span>
-              </v-chip>
-            </div>
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
-
-    <!-- 統計資訊 -->
-    <v-card elevation="3">
-      <v-card-title>
-        <v-icon color="primary" class="mr-2"> mdi-chart-bar </v-icon>
-        統計資訊
-      </v-card-title>
-
-      <v-card-text>
-        <div class="stats-grid">
-          <div>
-            <v-list>
-              <v-list-item>
-                <template #prepend>
-                  <v-icon color="grey-darken-2">mdi-calendar-range</v-icon>
-                </template>
-                <v-list-item-title>總天數：</v-list-item-title>
-                <template #append>
-                  <span class="font-weight-bold">{{ totalDays }} 天</span>
-                </template>
-              </v-list-item>
-
-              <v-list-item>
-                <template #prepend>
-                  <v-icon color="green-darken-2">mdi-briefcase</v-icon>
-                </template>
-                <v-list-item-title>工作天數：</v-list-item-title>
-                <template #append>
-                  <span class="font-weight-bold text-green-darken-2">{{ workingDays }} 天</span>
-                </template>
-              </v-list-item>
-
-              <v-list-item>
-                <template #prepend>
-                  <v-icon color="red-darken-2">mdi-home</v-icon>
-                </template>
-                <v-list-item-title>假日天數：</v-list-item-title>
-                <template #append>
-                  <span class="font-weight-bold text-red-darken-2">{{ holidayDays }} 天</span>
-                </template>
-              </v-list-item>
-            </v-list>
-          </div>
-
-          <div>
-            <v-list>
-              <v-list-item>
-                <template #prepend>
-                  <v-icon color="grey-darken-2">mdi-clock</v-icon>
-                </template>
-                <v-list-item-title>每日工時：</v-list-item-title>
-                <template #append>
-                  <span class="font-weight-bold">8 小時</span>
-                </template>
-              </v-list-item>
-
-              <v-list-item>
-                <template #prepend>
-                  <v-icon color="blue-darken-2">mdi-calculator</v-icon>
-                </template>
-                <v-list-item-title>總需工時：</v-list-item-title>
-                <template #append>
-                  <span class="font-weight-bold text-blue-darken-2">{{ requiredHours }} 小時</span>
-                </template>
-              </v-list-item>
-
-              <v-list-item>
-                <template #prepend>
-                  <v-icon color="green-darken-2">mdi-chart-line</v-icon>
-                </template>
-                <v-list-item-title>平均每週：</v-list-item-title>
-                <template #append>
-                  <span class="font-weight-bold text-green-darken-2"
-                    >{{ averageWeeklyHours }} 小時</span
-                  >
-                </template>
-              </v-list-item>
-            </v-list>
-          </div>
-        </div>
-      </v-card-text>
-    </v-card>
+  <!-- 標題區塊 -->
+  <div class="text-center mb-8">
+    <h1 class="text-h3 font-weight-bold text-grey-darken-3 mb-2">
+      <v-icon size="large" color="primary" class="mr-3"> mdi-clock </v-icon>
+      工時計算器
+    </h1>
+    <p class="text-h6 text-grey-darken-1">計算每月需要的工作時數（21日-20日週期）</p>
   </div>
+
+  <!-- 載入狀態和錯誤提示 -->
+  <v-alert v-if="loadingHolidays" type="info" variant="tonal" class="mb-4" icon="mdi-loading">
+    <template #prepend>
+      <v-progress-circular indeterminate size="20" />
+    </template>
+    正在載入假日資料...
+  </v-alert>
+
+  <v-alert v-if="holidayError" type="warning" variant="tonal" class="mb-4">
+    {{ holidayError }}
+  </v-alert>
+
+  <!-- 當前週期資訊 -->
+  <v-card class="mb-6" elevation="3">
+    <v-card-text>
+      <div class="period-info-grid">
+        <!-- 當前週期 -->
+        <v-card color="blue-lighten-5" class="text-center pa-4">
+          <v-card-title class="text-h6 text-blue-darken-2 mb-2"> 當前週期 </v-card-title>
+          <v-card-text>
+            <p class="text-blue-darken-1 text-h6">
+              {{ currentPeriod.start }} - {{ currentPeriod.end }}
+            </p>
+            <p class="text-caption text-grey-darken-1 mt-2">{{ getDaysRemaining() }}天後重置</p>
+          </v-card-text>
+        </v-card>
+
+        <!-- 需要工時 -->
+        <v-card color="green-lighten-5" class="text-center pa-4">
+          <v-card-title class="text-h6 text-green-darken-2 mb-2"> 需要工時 </v-card-title>
+          <v-card-text>
+            <p class="text-h3 font-weight-bold text-green-darken-1">{{ requiredHours }}</p>
+            <p class="text-caption text-grey-darken-1">小時</p>
+          </v-card-text>
+        </v-card>
+
+        <!-- 工作天數 -->
+        <v-card color="orange-lighten-5" class="text-center pa-4">
+          <v-card-title class="text-h6 text-orange-darken-2 mb-2"> 工作天數 </v-card-title>
+          <v-card-text>
+            <p class="text-h3 font-weight-bold text-orange-darken-1">{{ workingDays }}</p>
+            <p class="text-caption text-grey-darken-1">天</p>
+          </v-card-text>
+        </v-card>
+      </div>
+    </v-card-text>
+  </v-card>
+
+  <!-- 詳細日曆 -->
+  <v-card class="mb-6" elevation="3">
+    <v-card-title>
+      <v-icon color="primary" class="mr-2"> mdi-calendar </v-icon>
+      工作日曆
+    </v-card-title>
+
+    <v-card-text>
+      <!-- 月份選擇 -->
+      <div class="month-navigation mb-4 d-flex justify-space-between align-center">
+        <v-btn
+          color="primary"
+          variant="elevated"
+          prepend-icon="mdi-chevron-left"
+          @click="previousMonth">
+          上月
+        </v-btn>
+        <h3 class="text-h5 font-weight-medium">{{ formatPeriod(selectedDate) }}</h3>
+        <v-btn
+          color="primary"
+          variant="elevated"
+          append-icon="mdi-chevron-right"
+          @click="nextMonth">
+          下月
+        </v-btn>
+      </div>
+
+      <!-- 日曆網格 -->
+      <div class="calendar-grid mb-4">
+        <!-- 星期標題 -->
+        <div
+          v-for="day in weekDays"
+          :key="day"
+          class="calendar-header text-center font-weight-bold text-grey-darken-2 py-2">
+          {{ day }}
+        </div>
+
+        <!-- 日期格子 -->
+        <v-card
+          v-for="(day, index) in calendarDays"
+          :key="index"
+          :color="getDayColor(day)"
+          :variant="day.isCurrentPeriod ? 'elevated' : 'elevated'"
+          :elevation="day.isCurrentPeriod ? 2 : 1"
+          :class="[
+            'calendar-day text-center',
+            {
+              'non-current-period': !day.isCurrentPeriod,
+              'focused-day': isFocused(day),
+            },
+          ]"
+          @click="focusDay(day)">
+          <v-card-text class="pa-2">
+            <div class="font-weight-medium">{{ day.date }}</div>
+            <div v-if="day.isWorkDay" class="text-caption text-green-darken-2 mt-1">
+              <v-icon size="small" color="green-darken-2"> mdi-briefcase </v-icon>
+              <div class="font-weight-bold">{{ day.cumulativeHours }}h</div>
+            </div>
+            <div v-else-if="day.isHoliday" class="text-caption text-red-darken-2 mt-1">
+              <v-icon size="small" color="red-darken-2"> mdi-home </v-icon>
+              <div v-if="day.holidayDescription" class="holiday-text">
+                {{ day.holidayDescription }}
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </div>
+
+      <!-- 圖例 -->
+      <v-row class="mt-4">
+        <v-col cols="12">
+          <div class="d-flex flex-wrap ga-4">
+            <v-chip color="green-lighten-3" variant="outlined">
+              <v-icon start>mdi-briefcase</v-icon>
+              工作日
+            </v-chip>
+            <v-chip color="red-lighten-3" variant="outlined">
+              <v-icon start>mdi-home</v-icon>
+              假日
+            </v-chip>
+            <v-chip color="white" variant="outlined" class="grey-border">
+              <v-icon start color="grey">mdi-calendar-blank</v-icon>
+              <span class="text-grey">非本週期</span>
+            </v-chip>
+          </div>
+        </v-col>
+      </v-row>
+    </v-card-text>
+  </v-card>
+
+  <!-- 統計資訊 -->
+  <v-card elevation="3">
+    <v-card-title>
+      <v-icon color="primary" class="mr-2"> mdi-chart-bar </v-icon>
+      統計資訊
+    </v-card-title>
+
+    <v-card-text>
+      <div class="stats-grid">
+        <div>
+          <v-list>
+            <v-list-item>
+              <template #prepend>
+                <v-icon color="grey-darken-2">mdi-calendar-range</v-icon>
+              </template>
+              <v-list-item-title>總天數：</v-list-item-title>
+              <template #append>
+                <span class="font-weight-bold">{{ totalDays }} 天</span>
+              </template>
+            </v-list-item>
+
+            <v-list-item>
+              <template #prepend>
+                <v-icon color="green-darken-2">mdi-briefcase</v-icon>
+              </template>
+              <v-list-item-title>工作天數：</v-list-item-title>
+              <template #append>
+                <span class="font-weight-bold text-green-darken-2">{{ workingDays }} 天</span>
+              </template>
+            </v-list-item>
+
+            <v-list-item>
+              <template #prepend>
+                <v-icon color="red-darken-2">mdi-home</v-icon>
+              </template>
+              <v-list-item-title>假日天數：</v-list-item-title>
+              <template #append>
+                <span class="font-weight-bold text-red-darken-2">{{ holidayDays }} 天</span>
+              </template>
+            </v-list-item>
+          </v-list>
+        </div>
+
+        <div>
+          <v-list>
+            <v-list-item>
+              <template #prepend>
+                <v-icon color="grey-darken-2">mdi-clock</v-icon>
+              </template>
+              <v-list-item-title>每日工時：</v-list-item-title>
+              <template #append>
+                <span class="font-weight-bold">8 小時</span>
+              </template>
+            </v-list-item>
+
+            <v-list-item>
+              <template #prepend>
+                <v-icon color="blue-darken-2">mdi-calculator</v-icon>
+              </template>
+              <v-list-item-title>總需工時：</v-list-item-title>
+              <template #append>
+                <span class="font-weight-bold text-blue-darken-2">{{ requiredHours }} 小時</span>
+              </template>
+            </v-list-item>
+
+            <v-list-item>
+              <template #prepend>
+                <v-icon color="green-darken-2">mdi-chart-line</v-icon>
+              </template>
+              <v-list-item-title>平均每週：</v-list-item-title>
+              <template #append>
+                <span class="font-weight-bold text-green-darken-2"
+                  >{{ averageWeeklyHours }} 小時</span
+                >
+              </template>
+            </v-list-item>
+          </v-list>
+        </div>
+      </div>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script setup lang="ts">
@@ -602,12 +600,6 @@ const isFocused = (day: CalendarDay): boolean => {
 </script>
 
 <style scoped>
-.time-calculator-container {
-  max-width: 1024px;
-  margin: 0 auto;
-  padding: 0 16px;
-}
-
 .period-info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -739,10 +731,6 @@ const isFocused = (day: CalendarDay): boolean => {
 }
 
 @media (max-width: 768px) {
-  .time-calculator-container {
-    padding: 0 8px;
-  }
-
   .period-info-grid {
     grid-template-columns: 1fr;
     gap: 16px;
