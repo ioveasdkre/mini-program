@@ -15,10 +15,10 @@
 
     <!-- 功能介紹 -->
     <v-row class="mb-6">
-      <v-col cols="12" md="4">
+      <v-col cols="12" md="6" lg="3">
         <v-card class="h-100" elevation="3">
           <v-card-title class="text-center">
-            <v-icon size="large" color="blue-darken-2" class="mb-2"> mdi-calculator </v-icon>
+            <v-icon size="large" color="blue-darken-2" class="mb-2"> mdi-clock-time-four </v-icon>
             <div>工時計算器</div>
           </v-card-title>
           <v-card-text class="text-center">
@@ -27,10 +27,22 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" md="4">
+      <v-col cols="12" md="6" lg="3">
         <v-card class="h-100" elevation="3">
           <v-card-title class="text-center">
-            <v-icon size="large" color="green-darken-2" class="mb-2"> mdi-tools </v-icon>
+            <v-icon size="large" color="green-darken-2" class="mb-2"> mdi-piggy-bank </v-icon>
+            <div>存錢計算器</div>
+          </v-card-title>
+          <v-card-text class="text-center">
+            <p>計算複利存款的未來價值，幫助您規劃儲蓄目標，實現財務自由。</p>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" md="6" lg="3">
+        <v-card class="h-100" elevation="3">
+          <v-card-title class="text-center">
+            <v-icon size="large" color="orange-darken-2" class="mb-2"> mdi-tools </v-icon>
             <div>實用工具</div>
           </v-card-title>
           <v-card-text class="text-center">
@@ -39,10 +51,10 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" md="4">
+      <v-col cols="12" md="6" lg="3">
         <v-card class="h-100" elevation="3">
           <v-card-title class="text-center">
-            <v-icon size="large" color="orange-darken-2" class="mb-2"> mdi-speedometer </v-icon>
+            <v-icon size="large" color="purple-darken-2" class="mb-2"> mdi-speedometer </v-icon>
             <div>快速便捷</div>
           </v-card-title>
           <v-card-text class="text-center">
@@ -60,15 +72,22 @@
           <v-card-text class="mb-4">
             <p class="text-h6">探索我們的實用小工具，提升您的生活效率</p>
           </v-card-text>
-          <v-card-actions class="justify-center">
+          <v-card-actions class="justify-center flex-wrap ga-4">
             <v-btn
               size="large"
               color="primary"
               variant="elevated"
-              prepend-icon="mdi-calculator"
-              to="/time-calculator"
-              class="mr-4">
+              prepend-icon="mdi-clock-time-four"
+              to="/time-calculator">
               工時計算器
+            </v-btn>
+            <v-btn
+              size="large"
+              color="success"
+              variant="elevated"
+              prepend-icon="mdi-piggy-bank"
+              to="/savings-calculator">
+              存錢計算器
             </v-btn>
             <v-btn
               size="large"

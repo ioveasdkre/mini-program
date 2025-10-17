@@ -13,9 +13,14 @@
         首頁
       </v-btn>
 
-      <v-btn to="/time-calculator" text>
+      <v-btn to="/time-calculator" text class="mr-2">
         <v-icon left> mdi-calculator </v-icon>
         工時計算器
+      </v-btn>
+
+      <v-btn to="/savings-calculator" text>
+        <v-icon left> mdi-piggy-bank </v-icon>
+        存錢計算器
       </v-btn>
     </v-app-bar>
 
