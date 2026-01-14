@@ -7,7 +7,7 @@
 <script setup lang="ts">
 // 頁面 meta 資訊
 useHead({
-  title: '存錢計算器',
+  title: '陳俊生小工具平台 - 存錢計算器',
   meta: [
     {
       name: 'description',

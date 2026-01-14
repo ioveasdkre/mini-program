@@ -7,7 +7,7 @@
 <script setup lang="ts">
 // 設定頁面 SEO
 useHead({
-  title: '工時計算器 - 工時管理系統',
+  title: '陳俊生小工具平台 - 工時計算器',
   meta: [
     {
       name: 'description',

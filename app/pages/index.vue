@@ -42,6 +42,18 @@
       <v-col cols="12" md="6" lg="3">
         <v-card class="h-100" elevation="3">
           <v-card-title class="text-center">
+            <v-icon size="large" color="purple-darken-2" class="mb-2"> mdi-calendar-range </v-icon>
+            <div>日期範圍計算器</div>
+          </v-card-title>
+          <v-card-text class="text-center">
+            <p>計算並管理多筆日期範圍與天數，方便追蹤各種時間區間。</p>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" md="6" lg="3">
+        <v-card class="h-100" elevation="3">
+          <v-card-title class="text-center">
             <v-icon size="large" color="orange-darken-2" class="mb-2"> mdi-tools </v-icon>
             <div>實用工具</div>
           </v-card-title>
@@ -54,7 +66,7 @@
       <v-col cols="12" md="6" lg="3">
         <v-card class="h-100" elevation="3">
           <v-card-title class="text-center">
-            <v-icon size="large" color="purple-darken-2" class="mb-2"> mdi-speedometer </v-icon>
+            <v-icon size="large" color="teal-darken-2" class="mb-2"> mdi-speedometer </v-icon>
             <div>快速便捷</div>
           </v-card-title>
           <v-card-text class="text-center">
@@ -88,6 +100,14 @@
               prepend-icon="mdi-piggy-bank"
               to="/savings-calculator">
               存錢計算器
+            </v-btn>
+            <v-btn
+              size="large"
+              color="purple"
+              variant="elevated"
+              prepend-icon="mdi-calendar-range"
+              to="/date-range-calculator">
+              日期範圍計算器
             </v-btn>
             <v-btn
               size="large"
