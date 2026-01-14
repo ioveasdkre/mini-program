@@ -1,12 +1,6 @@
 <template>
   <!-- 標題區塊 -->
-  <div class="text-center mb-8">
-    <h1 class="text-h3 font-weight-bold text-grey-darken-3 mb-2">
-      <v-icon size="large" color="primary" class="mr-3"> mdi-piggy-bank </v-icon>
-      存錢計算器
-    </h1>
-    <p class="text-h6 text-grey-darken-1">計算複利存款的未來價值</p>
-  </div>
+  <PageHeader icon="mdi-piggy-bank" title="存錢計算器" description="計算複利存款的未來價值" />
 
   <!-- 輸入表單 -->
   <v-card class="mb-6" elevation="3">

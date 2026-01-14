@@ -1,12 +1,9 @@
 <template>
   <!-- 標題區塊 -->
-  <div class="text-center mb-8">
-    <h1 class="text-h3 font-weight-bold text-grey-darken-3 mb-2">
-      <v-icon size="large" color="primary" class="mr-3"> mdi-clock </v-icon>
-      工時計算器
-    </h1>
-    <p class="text-h6 text-grey-darken-1">計算每月需要的工作時數（21日-20日週期）</p>
-  </div>
+  <PageHeader
+    icon="mdi-clock"
+    title="工時計算器"
+    description="計算每月需要的工作時數（21日-20日週期）" />
 
   <!-- 載入狀態和錯誤提示 -->
   <v-alert v-if="loadingHolidays" type="info" variant="tonal" class="mb-4" icon="mdi-loading">
@@ -754,6 +751,10 @@ const isFocused = (day: CalendarDay): boolean => {
 @media (max-width: 480px) {
   .period-info-grid {
     gap: 12px;
+  }
+
+  .calendar-grid {
+    gap: 4px;
   }
 }
 </style>
