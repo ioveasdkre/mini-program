@@ -1,6 +1,8 @@
 <template>
   <div>
-    <SavingsCalculator />
+    <ClientOnly>
+      <SavingsCalculator />
+    </ClientOnly>
   </div>
 </template>
 

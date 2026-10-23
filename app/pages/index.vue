@@ -16,7 +16,7 @@
     <!-- 功能介紹 -->
     <v-row class="mb-6">
       <v-col cols="12" md="6" lg="3">
-        <v-card class="h-100" elevation="3">
+        <v-card class="h-100" elevation="3" to="/time-calculator" hover>
           <v-card-title class="text-center">
             <v-icon size="large" color="blue-darken-2" class="mb-2"> mdi-clock-time-four </v-icon>
             <div>工時計算器</div>
@@ -28,7 +28,7 @@
       </v-col>
 
       <v-col cols="12" md="6" lg="3">
-        <v-card class="h-100" elevation="3">
+        <v-card class="h-100" elevation="3" to="/savings-calculator" hover>
           <v-card-title class="text-center">
             <v-icon size="large" color="green-darken-2" class="mb-2"> mdi-piggy-bank </v-icon>
             <div>存錢計算器</div>
@@ -40,7 +40,7 @@
       </v-col>
 
       <v-col cols="12" md="6" lg="3">
-        <v-card class="h-100" elevation="3">
+        <v-card class="h-100" elevation="3" to="/date-range-calculator" hover>
           <v-card-title class="text-center">
             <v-icon size="large" color="purple-darken-2" class="mb-2"> mdi-calendar-range </v-icon>
             <div>日期範圍計算器</div>

@@ -1,6 +1,8 @@
 <template>
   <div>
-    <TimeCalculator />
+    <ClientOnly>
+      <TimeCalculator />
+    </ClientOnly>
   </div>
 </template>
 

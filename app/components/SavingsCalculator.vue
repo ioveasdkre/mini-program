@@ -70,6 +70,68 @@
     </v-card-text>
   </v-card>
 
+  <!-- 儲存方案 -->
+  <v-card class="mb-6" elevation="3">
+    <v-card-title>
+      <v-icon color="primary" class="mr-2"> mdi-content-save </v-icon>
+      儲存方案
+    </v-card-title>
+
+    <v-card-text>
+      <v-row align="center">
+        <v-col cols="12" md="5">
+          <v-text-field
+            v-model="scenarioName"
+            label="方案名稱"
+            variant="outlined"
+            color="primary"
+            maxlength="50"
+            hide-details />
+        </v-col>
+        <v-col cols="12" md="7" class="d-flex flex-wrap ga-3">
+          <v-btn
+            color="success"
+            prepend-icon="mdi-content-save"
+            :loading="creating"
+            @click="saveAsNew">
+            儲存為新方案
+          </v-btn>
+          <v-btn
+            v-if="currentScenarioId !== null"
+            color="primary"
+            variant="outlined"
+            prepend-icon="mdi-content-save-edit"
+            :loading="updating"
+            @click="updateCurrent">
+            更新目前方案
+          </v-btn>
+        </v-col>
+      </v-row>
+
+      <v-progress-linear v-if="loadingScenarios" indeterminate class="mt-4" />
+      <v-list v-else-if="scenarios && scenarios.length > 0" class="mt-4">
+        <v-list-item
+          v-for="item in scenarios"
+          :key="item.id"
+          :active="item.id === currentScenarioId"
+          :title="item.name"
+          :subtitle="describeScenario(item)"
+          prepend-icon="mdi-piggy-bank"
+          @click="loadScenario(item)">
+          <template #append>
+            <v-btn
+              icon="mdi-delete"
+              size="small"
+              color="error"
+              variant="text"
+              @click.stop="removeScenario(item.id)" />
+          </template>
+        </v-list-item>
+      </v-list>
+      <v-alert v-else variant="tonal" type="info" class="mt-4"> 尚未儲存任何方案 </v-alert>
+    </v-card-text>
+  </v-card>
+
   <!-- 計算結果 -->
   <v-card class="mb-6" elevation="3">
     <v-card-text>
@@ -199,11 +261,74 @@
 </template>
 
 <script setup lang="ts">
+import type { SavingsScenarioDto, SavingsScenarioInput } from '~~/shared/types/api';
+
 // 響應式數據
 const initialAmount = ref(0); // 初始金額
 const monthlyDeposit = ref(3000); // 每月存款金額
 const annualInterestRate = ref(6); // 年利率（百分比）
 const years = ref(40); // 存款年數
+
+// 儲存的方案
+const { data: scenarios, isLoading: loadingScenarios } = useSavingsScenariosQuery();
+const { mutateAsync: createScenario, isPending: creating } = useCreateSavingsScenario();
+const { mutateAsync: updateScenario, isPending: updating } = useUpdateSavingsScenario();
+const { mutateAsync: removeScenarioApi } = useRemoveSavingsScenario();
+const { notify } = useNotify();
+
+const scenarioName = ref('');
+const currentScenarioId = ref<number | null>(null);
+
+const buildInput = (): SavingsScenarioInput => ({
+  name: scenarioName.value.trim(),
+  initialAmount: initialAmount.value,
+  monthlyDeposit: monthlyDeposit.value,
+  annualRate: annualInterestRate.value,
+  years: years.value,
+});
+
+const describeScenario = (item: SavingsScenarioDto): string =>
+  `初始 ${formatCurrency(item.initialAmount)}、每月 ${formatCurrency(item.monthlyDeposit)}、年利率 ${item.annualRate}%、${item.years} 年`;
+
+const loadScenario = (item: SavingsScenarioDto) => {
+  initialAmount.value = item.initialAmount;
+  monthlyDeposit.value = item.monthlyDeposit;
+  annualInterestRate.value = item.annualRate;
+  years.value = item.years;
+  scenarioName.value = item.name;
+  currentScenarioId.value = item.id;
+};
+
+const saveAsNew = async () => {
+  try {
+    const saved = await createScenario(buildInput());
+    // 排序為最新在前，第一筆即為剛建立的方案
+    currentScenarioId.value = saved[0]?.id ?? null;
+    notify('已儲存');
+  } catch (error) {
+    notify(getErrorMessage(error), 'error');
+  }
+};
+
+const updateCurrent = async () => {
+  if (currentScenarioId.value === null) return;
+  try {
+    await updateScenario({ id: currentScenarioId.value, input: buildInput() });
+    notify('已更新');
+  } catch (error) {
+    notify(getErrorMessage(error), 'error');
+  }
+};
+
+const removeScenario = async (id: number) => {
+  try {
+    await removeScenarioApi(id);
+    if (currentScenarioId.value === id) currentScenarioId.value = null;
+    notify('已刪除');
+  } catch (error) {
+    notify(getErrorMessage(error), 'error');
+  }
+};
 
 // 計算結果介面
 interface CalculationResult {

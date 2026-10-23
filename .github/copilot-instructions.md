@@ -2,7 +2,9 @@
 
 ## 專案概述
 
-Nuxt 4 + Vue 3 + TypeScript + Vuetify 的 **SPA 應用程式**（SSR 已停用）。這是一個提供多個實用計算器的工具平台（工時計算、存錢計算、日期範圍計算等）。UI 語言為**繁體中文**。
+Nuxt 4 + Vue 3 + TypeScript + Vuetify 應用程式（SSR 啟用，部署於 Vercel）。這是一個提供多個實用計算器的工具平台（工時計算、存錢計算、日期範圍計算等）。UI 語言為**繁體中文**。
+
+後端使用 Nitro（`server/`）+ Turso（libSQL）儲存資料，Google 登入（`nuxt-auth-utils`）搭配 `ALLOWED_EMAILS` 白名單，未授權者看不到任何頁面。
 
 ## 核心架構
 
@@ -16,6 +18,9 @@ Nuxt 4 + Vue 3 + TypeScript + Vuetify 的 **SPA 應用程式**（SSR 已停用�
   - `app/utils/` - 工具函式（如 `logger.ts`）
   - `app/plugins/` - Nuxt 外掛（如 `vuetify.ts`）
 - **路徑別名**: `@/*` 和 `~/*` 指向 `./app/*`
+- **`server/`** - Nitro 後端：`api/`（CRUD）、`routes/auth/`（Google OAuth）、`middleware/auth.ts`（頁面與 API 的登入檢查）、`utils/`（`useDb`、`requireAllowedUser`、驗證函式）
+- **`shared/types/`** - 前後端共用的 DTO 型別
+- 計算器元件以 `<ClientOnly>` 包在頁面中，避免日期相關的 hydration 不一致
 
 ### 配置管理模式
 
@@ -56,7 +61,7 @@ import { runtimeConfig, securityConfig, veeValidateConfig, vuetifyConfig } from 
 - **語言**: UI 文字、註釋、變數名使用**繁體中文**
 - **格式化**: Prettier 使用 `.prettierrc.json` 配置
 - **Linting**: ESLint 設定於 `eslint.config.mjs`（繼承 Nuxt 配置）
-- **Pre-commit**: Husky + lint-staged 自動格式化暫存檔案（`npm run precommit`）
+- **Pre-commit**: Husky + lint-staged 自動格式化暫存檔案（`bun run precommit`）
 
 ### 日誌記錄
 
@@ -69,13 +74,17 @@ appLogger.info('message'); // 生產環境自動禁用
 
 ## 常用命令
 
+本專案使用 **bun** 作為套件管理器（鎖定檔為 `bun.lock`），請勿使用 npm、yarn 或 pnpm。
+
 ```bash
-npm run dev          # 開發伺服器 (localhost:3000)
-npm run build        # 生產建置
-npm run typecheck    # TypeScript 型別檢查
-npm run lint         # ESLint 檢查
-npm run format       # Prettier 格式化
-npm run precommit    # 手動執行 pre-commit（自動由 Husky 觸發）
+bun install              # 安裝依賴（會觸發 nuxt prepare）
+bun add <套件>           # 新增依賴
+bun run dev              # 開發伺服器 (localhost:3000)
+bun run build            # 生產建置
+bun run typecheck        # TypeScript 型別檢查
+bun run lint             # ESLint 檢查
+bun run format           # Prettier 格式化
+bun run precommit        # 手動執行 pre-commit（自動由 Husky 觸發）
 ```
 
 ## 關鍵依賴與整合
@@ -85,13 +94,14 @@ npm run precommit    # 手動執行 pre-commit（自動由 Husky 觸發）
 - **Pinia** - 狀態管理（`@pinia/nuxt`）
 - **VueUse** - Composables 工具集
 - **Nuxt Security** - 安全標頭（CSP 目前註解，但 Permissions-Policy、X-Frame-Options 等已啟用）
+- **nuxt-auth-utils** - Google 登入與 session；**@libsql/client** - Turso 連線（使用 `/web` 版）
 - **TanStack Vue Query** - 資料獲取（客戶端外掛 `vue-query.client.ts`）
 
 ## 安全與建置
 
 - **生產環境**: `console` 與 `debugger` 於建置時自動移除（Vite esbuild 配置）
 - **Nonce**: 安全模組啟用 nonce，用於內聯腳本/樣式
-- **SPA 模式**: 無伺服器端渲染（`ssr: false`）
+- **SSR 模式**: `ssr: true`，伺服器端環境變數見 `.env.example`（直接讀 `process.env`）
 
 ## 範例元件結構
 
@@ -120,5 +130,5 @@ const computed = computed(() => count.value * 2);
 
 - 新增頁面時，記得更新 `app/layouts/default.vue` 的導航列
 - 配置變更需修改 `app/configs/` 對應檔案，而非直接寫在 `nuxt.config.ts`
-- 此專案**無伺服器端程式碼**，所有邏輯運行於客戶端
+- 此專案的資料邏輯在 `server/`，前端透過 `app/composables/` 的 Vue Query 呼叫 `/api/*`
 - 環境變數透過 `runtimeConfig.public.*` 存取（參見 `app/configs/runtime.ts`）

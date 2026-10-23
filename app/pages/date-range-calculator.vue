@@ -1,6 +1,8 @@
 <template>
   <div>
-    <DateRangeCalculator />
+    <ClientOnly>
+      <DateRangeCalculator />
+    </ClientOnly>
   </div>
 </template>
 

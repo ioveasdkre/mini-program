@@ -224,6 +224,59 @@
       </div>
     </v-card-text>
   </v-card>
+
+  <!-- 儲存週期 -->
+  <v-card class="mt-6" elevation="3">
+    <v-card-title>
+      <v-icon color="primary" class="mr-2"> mdi-content-save </v-icon>
+      儲存週期
+    </v-card-title>
+
+    <v-card-text>
+      <v-row align="center">
+        <v-col cols="12" md="5">
+          <v-text-field
+            v-model="saveName"
+            label="名稱（選填）"
+            variant="outlined"
+            color="primary"
+            maxlength="50"
+            hide-details />
+        </v-col>
+        <v-col cols="12" md="7" class="d-flex align-center ga-3">
+          <v-btn
+            color="success"
+            prepend-icon="mdi-content-save"
+            :loading="savingPeriod"
+            @click="savePeriod">
+            儲存此週期
+          </v-btn>
+          <span class="text-body-2 text-grey">{{ formatPeriod(selectedDate) }}</span>
+        </v-col>
+      </v-row>
+
+      <v-progress-linear v-if="loadingSaved" indeterminate class="mt-4" />
+      <v-list v-else-if="savedPeriods && savedPeriods.length > 0" class="mt-4">
+        <v-list-item
+          v-for="item in savedPeriods"
+          :key="item.id"
+          :title="item.name || '未命名'"
+          :subtitle="formatSavedPeriod(item.periodStart)"
+          prepend-icon="mdi-calendar-check"
+          @click="jumpToPeriod(item.periodStart)">
+          <template #append>
+            <v-btn
+              icon="mdi-delete"
+              size="small"
+              color="error"
+              variant="text"
+              @click.stop="removeSavedPeriod(item.id)" />
+          </template>
+        </v-list-item>
+      </v-list>
+      <v-alert v-else variant="tonal" type="info" class="mt-4"> 尚未儲存任何週期 </v-alert>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script setup lang="ts">
@@ -232,6 +285,48 @@ import { useQuery } from '@tanstack/vue-query';
 // 響應式數據
 const selectedDate = ref(new Date());
 const focusedDate = ref<Date | null>(null);
+
+// 儲存的週期
+const { data: savedPeriods, isLoading: loadingSaved } = useTimePeriodsQuery();
+const { mutateAsync: createPeriod, isPending: savingPeriod } = useCreateTimePeriod();
+const { mutateAsync: removePeriod } = useRemoveTimePeriod();
+const { notify } = useNotify();
+const saveName = ref('');
+
+const toIsoDate = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate(),
+  ).padStart(2, '0')}`;
+
+const parseIsoDate = (value: string) => new Date(`${value}T00:00:00`);
+
+const formatSavedPeriod = (periodStart: string) => formatPeriod(parseIsoDate(periodStart));
+
+const savePeriod = async () => {
+  try {
+    await createPeriod({
+      periodStart: toIsoDate(selectedPeriod.value.startDate),
+      name: saveName.value.trim() || undefined,
+    });
+    saveName.value = '';
+    notify('已儲存');
+  } catch (error) {
+    notify(getErrorMessage(error), 'error');
+  }
+};
+
+const jumpToPeriod = (periodStart: string) => {
+  selectedDate.value = parseIsoDate(periodStart);
+};
+
+const removeSavedPeriod = async (id: number) => {
+  try {
+    await removePeriod(id);
+    notify('已刪除');
+  } catch (error) {
+    notify(getErrorMessage(error), 'error');
+  }
+};
 
 // 基礎數據
 const weekDays = ['日', '一', '二', '三', '四', '五', '六'];

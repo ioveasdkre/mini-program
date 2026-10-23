@@ -11,7 +11,7 @@ export default defineNuxtConfig({
       enabled: true,
     },
   },
-  ssr: false,
+  ssr: true,
   typescript: {
     typeCheck: true,
   },
@@ -27,6 +27,7 @@ export default defineNuxtConfig({
     '@vee-validate/nuxt',
     'vuetify-nuxt-module',
     'nuxt-security',
+    'nuxt-auth-utils',
   ],
   runtimeConfig,
   security: securityConfig,
