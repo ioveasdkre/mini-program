@@ -12,6 +12,10 @@ import type { ModuleOptions } from 'nuxt-security';
 const securityConfig: Partial<ModuleOptions> = {
   nonce: true,
   enabled: true, // 啟用安全機制
+  // xss 1.0.16 搭配 nuxt-security 2.6.0 會因 escapeHtml 為 undefined 而讓帶查詢參數的 GET 回 500
+  xssValidator: {
+    escapeHtml: false,
+  },
   headers: {
     //
     // 設定 Content Security Policy (CSP)

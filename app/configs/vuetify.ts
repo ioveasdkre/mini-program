@@ -1,5 +1,8 @@
 const vuetifyConfig = {
   moduleOptions: {
+    // Nuxt 4.6 內建 useLayout，與 Vuetify 的同名；本專案沒有使用 Vuetify composables
+    importComposables: false,
+
     // check https://nuxt.vuetifyjs.com/guide/server-side-rendering.html
     ssrClientHints: {
       reloadOnFirstRequest: false,

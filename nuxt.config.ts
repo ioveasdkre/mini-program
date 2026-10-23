@@ -16,8 +16,17 @@ export default defineNuxtConfig({
     typeCheck: true,
   },
   vite: {
-    esbuild: {
-      drop: runtimeConfig.public.isProduction ? ['console', 'debugger'] : [],
+    build: {
+      rolldownOptions: {
+        output: {
+          minify: {
+            compress: {
+              dropConsole: runtimeConfig.public.isProduction,
+              dropDebugger: runtimeConfig.public.isProduction,
+            },
+          },
+        },
+      },
     },
   },
   modules: [
