@@ -1,13 +1,29 @@
 import type { ModuleOptions } from 'nuxt-security';
-// import runtimeConfig from './runtime';
 
-// const selfOrLocalhost = runtimeConfig.public.isProduction
-//   ? ["'self'", 'data:']
-//   : ["'self'", 'http://localhost:4200', 'https://fonts.gstatic.com'];
-// const none = ["'none'"];
-// const selfOrUnsafeInline = runtimeConfig.public.isProduction
-//   ? ["'self'"]
-//   : ["'unsafe-inline'", 'http://localhost:4200'];
+const isProduction = process.env['NODE_ENV'] === 'production';
+
+// 開發模式沿用模組預設的 CSP，避免擋住 Vite HMR
+// cdn.jsdelivr.net 用於 mdi 圖示字型與工時計算器的假日資料
+type SecurityHeaders = Exclude<ModuleOptions['headers'], false>;
+
+const productionCsp: Exclude<SecurityHeaders['contentSecurityPolicy'], false | undefined> = {
+  'base-uri': ["'none'"],
+  'connect-src': ["'self'", 'https://cdn.jsdelivr.net'],
+  'font-src': ["'self'", 'data:', 'https://cdn.jsdelivr.net'],
+  'form-action': ["'self'"],
+  'frame-ancestors': ["'none'"],
+  'frame-src': ["'none'"],
+  'img-src': ["'self'", 'data:'],
+  'manifest-src': ["'self'"],
+  'object-src': ["'none'"],
+  // https: 與 unsafe-inline 只是舊瀏覽器的後備，支援 strict-dynamic 的瀏覽器會忽略
+  'script-src': ["'self'", 'https:', "'unsafe-inline'", "'strict-dynamic'", "'nonce-{{nonce}}'"],
+  'script-src-attr': ["'none'"],
+  // Vuetify 會輸出內聯 style
+  'style-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+  'worker-src': ["'none'"],
+  'upgrade-insecure-requests': true,
+};
 
 const securityConfig: Partial<ModuleOptions> = {
   nonce: true,
@@ -16,32 +32,32 @@ const securityConfig: Partial<ModuleOptions> = {
   xssValidator: {
     escapeHtml: false,
   },
+  // 網站只服務自己的前端，不開放跨來源存取
+  corsHandler: false,
+  allowedMethodsRestricter: {
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE'],
+    throwError: true,
+  },
+  // API 的資料都很小
+  requestSizeLimiter: {
+    maxRequestSizeInBytes: 100 * 1024,
+    maxUploadFileRequestInBytes: 100 * 1024,
+    throwError: true,
+  },
+  rateLimiter: {
+    tokensPerInterval: 150,
+    interval: 5 * 60 * 1000,
+    throwError: true,
+  },
   headers: {
-    //
-    // 設定 Content Security Policy (CSP)
-    // contentSecurityPolicy: {
-    //   'base-uri': none,
-    //   'child-src': none,
-    //   'connect-src': ["'self'", 'https://localhost:44311'],
-    //   'default-src': selfOrLocalhost,
-    //   'font-src': [...selfOrLocalhost],
-    //   'form-action': none,
-    //   'frame-ancestors': none,
-    //   'frame-src': selfOrLocalhost,
-    //   'img-src': ["'self'", 'data:'],
-    //   'manifest-src': none,
-    //   'media-src': none,
-    //   'object-src': none,
-    //   sandbox: false,
-    //   'script-src': selfOrLocalhost,
-    //   'script-src-attr': none,
-    //   'script-src-elem': selfOrUnsafeInline,
-    //   'style-src': selfOrUnsafeInline,
-    //   'style-src-elem': selfOrUnsafeInline,
-    //   // 'trusted-types': ['vue', "'allow-duplicates'"], // TODO: 暫時不使用，會發生 Refused to create a TrustedTypePolicy named 'sanitizer' because it violates the following Content Security Policy directive: "trusted-types vue 'allow-duplicates'".
-    //   'upgrade-insecure-requests': true,
-    //   'worker-src': none,
-    // },
+    ...(isProduction ? { contentSecurityPolicy: productionCsp } : {}),
+
+    // 強制 HTTPS（一年）
+    strictTransportSecurity: {
+      maxAge: 31536000,
+      includeSubdomains: true,
+      preload: false,
+    },
 
     // 限制權限 (Permissions-Policy)
     permissionsPolicy: {
@@ -75,9 +91,20 @@ const securityConfig: Partial<ModuleOptions> = {
     // 禁止 Flash 允許跨域請求
     xPermittedCrossDomainPolicies: 'none',
 
-    // XSS 保護
-    xXSSProtection: '1; mode=block',
+    // XSS 保護：舊的 XSS Auditor 已被認定可能造成漏洞，建議關閉，改由 CSP 負責
+    xXSSProtection: '0',
   },
+};
+
+// 登入與 API 不可被快取，且整個網站不讓搜尋引擎索引
+export const securityRouteRules = {
+  '/**': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
+  '/auth/**': {
+    headers: { 'cache-control': 'no-store' },
+    // 登入流程限制更嚴格，降低暴力嘗試
+    security: { rateLimiter: { tokensPerInterval: 20, interval: 60 * 1000 } },
+  },
+  '/api/**': { headers: { 'cache-control': 'no-store' } },
 };
 
 export default securityConfig;

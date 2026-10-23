@@ -1,5 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import { runtimeConfig, securityConfig, veeValidateConfig, vuetifyConfig } from './app/configs';
+import {
+  runtimeConfig,
+  securityConfig,
+  securityRouteRules,
+  veeValidateConfig,
+  vuetifyConfig,
+} from './app/configs';
 
 const baseURL = runtimeConfig.public.baseUrl;
 
@@ -39,6 +45,7 @@ export default defineNuxtConfig({
     'nuxt-auth-utils',
   ],
   runtimeConfig,
+  routeRules: securityRouteRules,
   security: securityConfig,
   veeValidate: veeValidateConfig,
   vuetify: vuetifyConfig,
