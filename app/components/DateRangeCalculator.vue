@@ -148,8 +148,8 @@ const records = ref<DateRecord[]>([
   },
   {
     id: nextId++,
-    startDate: '2026-01-01',
-    endDate: getTodayString(),
+    startDate: getTodayString(),
+    endDate: '2027-05-29',
   },
 ]);
 
