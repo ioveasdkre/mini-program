@@ -26,9 +26,10 @@ export default defineNuxtConfig({
       rolldownOptions: {
         output: {
           minify: {
+            // 只在 nuxt build 生效，dev 不壓縮
             compress: {
-              dropConsole: runtimeConfig.public.isProduction,
-              dropDebugger: runtimeConfig.public.isProduction,
+              dropConsole: true,
+              dropDebugger: true,
             },
           },
         },

@@ -35,6 +35,25 @@ const SCHEMA = [
   )`,
 ];
 
+// 舊資料表缺少後來新增的欄位，在啟動時補上
+const migrateDateRanges = async (db: Client): Promise<void> => {
+  const columns = await db.execute("SELECT name FROM pragma_table_info('date_ranges')");
+  const existing = new Set(columns.rows.map(row => String(row['name'])));
+
+  if (!existing.has('start_mode')) {
+    await db.execute(
+      "ALTER TABLE date_ranges ADD COLUMN start_mode TEXT NOT NULL DEFAULT 'fixed' CHECK (start_mode IN ('fixed', 'today'))",
+    );
+  }
+  if (!existing.has('note')) {
+    await db.execute("ALTER TABLE date_ranges ADD COLUMN note TEXT NOT NULL DEFAULT ''");
+  }
+  if (!existing.has('sort_order')) {
+    await db.execute('ALTER TABLE date_ranges ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0');
+    await db.execute('UPDATE date_ranges SET sort_order = id');
+  }
+};
+
 let ready: Promise<Client> | undefined;
 
 const initDb = async (): Promise<Client> => {
@@ -49,6 +68,7 @@ const initDb = async (): Promise<Client> => {
     authToken: process.env['TURSO_AUTH_TOKEN'],
   });
   await db.batch(SCHEMA, 'write');
+  await migrateDateRanges(db);
   return db;
 };
 

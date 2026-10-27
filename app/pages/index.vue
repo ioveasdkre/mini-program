@@ -3,12 +3,12 @@
     <!-- 歡迎區塊 -->
     <v-row class="mb-8">
       <v-col cols="12" class="text-center">
-        <v-card color="primary" dark class="pa-8">
-          <v-card-title class="text-h2 mb-4">
+        <v-card color="primary" dark class="hero-card">
+          <v-card-title class="hero-title mb-4">
             <v-icon size="x-large" class="mr-4"> mdi-apps </v-icon>
             陳俊生小程式工具平台
           </v-card-title>
-          <v-card-text class="text-h5"> 便捷實用的生活工具集合平台 </v-card-text>
+          <v-card-text class="hero-subtitle"> 便捷實用的生活工具集合平台 </v-card-text>
         </v-card>
       </v-col>
     </v-row>
@@ -80,9 +80,9 @@
     <v-row>
       <v-col cols="12" class="text-center">
         <v-card class="pa-6" elevation="2">
-          <v-card-title class="text-h4 mb-4"> 開始使用 </v-card-title>
+          <v-card-title class="cta-title mb-4"> 開始使用 </v-card-title>
           <v-card-text class="mb-4">
-            <p class="text-h6">探索我們的實用小工具，提升您的生活效率</p>
+            <p class="cta-text">探索我們的實用小工具，提升您的生活效率</p>
           </v-card-text>
           <v-card-actions class="justify-center flex-wrap ga-4">
             <v-btn
@@ -137,3 +137,60 @@ useHead({
   ],
 });
 </script>
+
+<style scoped>
+.hero-card {
+  padding: 32px;
+}
+
+.hero-title {
+  font-size: 3.75rem;
+  font-weight: 300;
+  line-height: 3.75rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.hero-subtitle {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+.cta-title {
+  font-size: 2.125rem;
+  line-height: 2.5rem;
+  white-space: normal;
+}
+
+.cta-text {
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 2rem;
+}
+
+@media (max-width: 768px) {
+  .hero-card {
+    padding: 20px 12px;
+  }
+
+  .hero-title {
+    font-size: 1.75rem;
+    line-height: 2.25rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  .cta-title {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .cta-text {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+}
+</style>

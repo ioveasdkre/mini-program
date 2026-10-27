@@ -23,9 +23,9 @@
       <div class="period-info-grid">
         <!-- 當前週期 -->
         <v-card color="blue-lighten-5" class="text-center pa-4">
-          <v-card-title class="text-h6 text-blue-darken-2 mb-2"> 當前週期 </v-card-title>
+          <v-card-title class="info-title text-blue-darken-2 mb-2"> 當前週期 </v-card-title>
           <v-card-text>
-            <p class="text-blue-darken-1 text-h6">
+            <p class="period-range text-blue-darken-1">
               {{ currentPeriod.start }} - {{ currentPeriod.end }}
             </p>
             <p class="text-caption text-grey-darken-1 mt-2">{{ getDaysRemaining() }}天後重置</p>
@@ -34,18 +34,18 @@
 
         <!-- 需要工時 -->
         <v-card color="green-lighten-5" class="text-center pa-4">
-          <v-card-title class="text-h6 text-green-darken-2 mb-2"> 需要工時 </v-card-title>
+          <v-card-title class="info-title text-green-darken-2 mb-2"> 需要工時 </v-card-title>
           <v-card-text>
-            <p class="text-h3 font-weight-bold text-green-darken-1">{{ requiredHours }}</p>
+            <p class="info-value font-weight-bold text-green-darken-1">{{ requiredHours }}</p>
             <p class="text-caption text-grey-darken-1">小時</p>
           </v-card-text>
         </v-card>
 
         <!-- 工作天數 -->
         <v-card color="orange-lighten-5" class="text-center pa-4">
-          <v-card-title class="text-h6 text-orange-darken-2 mb-2"> 工作天數 </v-card-title>
+          <v-card-title class="info-title text-orange-darken-2 mb-2"> 工作天數 </v-card-title>
           <v-card-text>
-            <p class="text-h3 font-weight-bold text-orange-darken-1">{{ workingDays }}</p>
+            <p class="info-value font-weight-bold text-orange-darken-1">{{ workingDays }}</p>
             <p class="text-caption text-grey-darken-1">天</p>
           </v-card-text>
         </v-card>
@@ -62,7 +62,7 @@
 
     <v-card-text>
       <!-- 月份選擇 -->
-      <div class="month-navigation mb-4 d-flex justify-space-between align-center">
+      <div class="month-navigation mb-4 d-flex justify-space-between align-center ga-2">
         <v-btn
           color="primary"
           variant="elevated"
@@ -70,7 +70,7 @@
           @click="previousMonth">
           上月
         </v-btn>
-        <h3 class="text-h5 font-weight-medium">{{ formatPeriod(selectedDate) }}</h3>
+        <h3 class="month-title font-weight-medium text-center">{{ formatPeriod(selectedDate) }}</h3>
         <v-btn
           color="primary"
           variant="elevated"
@@ -243,7 +243,7 @@
             maxlength="50"
             hide-details />
         </v-col>
-        <v-col cols="12" md="7" class="d-flex align-center ga-3">
+        <v-col cols="12" md="7" class="d-flex flex-wrap align-center ga-3">
           <v-btn
             color="success"
             prepend-icon="mdi-content-save"
@@ -698,6 +698,29 @@ const isFocused = (day: CalendarDay): boolean => {
   gap: 24px;
 }
 
+.info-title {
+  font-size: 1.25rem;
+  font-weight: 500;
+  white-space: normal;
+}
+
+.period-range {
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 2rem;
+  overflow-wrap: anywhere;
+}
+
+.info-value {
+  font-size: 3rem;
+  line-height: 3.125rem;
+}
+
+.month-title {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -835,6 +858,39 @@ const isFocused = (day: CalendarDay): boolean => {
 
   .calendar-day {
     min-height: 70px;
+  }
+
+  .info-title,
+  .period-range {
+    font-size: 1.05rem;
+    line-height: 1.5rem;
+  }
+
+  .info-value {
+    font-size: 2rem;
+    line-height: 2.5rem;
+  }
+
+  .month-title {
+    font-size: 0.95rem;
+    line-height: 1.25rem;
+  }
+
+  .month-navigation .v-btn {
+    min-width: 0;
+    padding: 0 8px;
+  }
+
+  .calendar-day .font-weight-medium {
+    font-size: 0.875rem;
+  }
+
+  .calendar-day .text-caption {
+    font-size: 0.65rem !important;
+  }
+
+  .holiday-text {
+    font-size: 0.6rem !important;
   }
 
   .stats-grid {

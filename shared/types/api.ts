@@ -1,9 +1,15 @@
 export type DateRangeEndMode = 'fixed' | 'today';
+export type DateRangeStartMode = 'fixed' | 'today';
 
 export interface DateRecordInput {
   // 沒有 id 代表新增
   id?: number;
   title: string;
+  note: string;
+  // 沒有帶時：新增排在最後、更新維持原順序
+  sortOrder?: number;
+  // startMode 為 today 時僅作為備用值，實際起始日由前端即時計算
+  startMode: DateRangeStartMode;
   startDate: string;
   endMode: DateRangeEndMode;
   // endMode 為 today 時為 null
@@ -14,6 +20,7 @@ export interface DateRecordInput {
 
 export interface DateRecordDto extends DateRecordInput {
   id: number;
+  sortOrder: number;
 }
 
 export interface SaveDateRecordsInput {

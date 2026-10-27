@@ -138,12 +138,12 @@
       <div class="result-grid">
         <!-- 最終總額 -->
         <v-card color="green-lighten-5" class="text-center pa-4">
-          <v-card-title class="text-h6 text-green-darken-2 mb-2">
+          <v-card-title class="result-title text-green-darken-2 mb-2">
             <v-icon class="mr-2">mdi-cash-multiple</v-icon>
             最終總額
           </v-card-title>
           <v-card-text>
-            <p class="text-h3 font-weight-bold text-green-darken-1">
+            <p class="result-value font-weight-bold text-green-darken-1">
               {{ formatCurrency(result.finalAmount) }}
             </p>
             <p class="text-caption text-grey-darken-1">{{ years }} 年後的總金額</p>
@@ -152,12 +152,12 @@
 
         <!-- 總本金 -->
         <v-card color="blue-lighten-5" class="text-center pa-4">
-          <v-card-title class="text-h6 text-blue-darken-2 mb-2">
+          <v-card-title class="result-title text-blue-darken-2 mb-2">
             <v-icon class="mr-2">mdi-hand-coin</v-icon>
             總投入本金
           </v-card-title>
           <v-card-text>
-            <p class="text-h3 font-weight-bold text-blue-darken-1">
+            <p class="result-value font-weight-bold text-blue-darken-1">
               {{ formatCurrency(result.totalPrincipal) }}
             </p>
             <p class="text-caption text-grey-darken-1">實際存入的金額</p>
@@ -166,12 +166,12 @@
 
         <!-- 總利息 -->
         <v-card color="orange-lighten-5" class="text-center pa-4">
-          <v-card-title class="text-h6 text-orange-darken-2 mb-2">
+          <v-card-title class="result-title text-orange-darken-2 mb-2">
             <v-icon class="mr-2">mdi-trending-up</v-icon>
             總利息收益
           </v-card-title>
           <v-card-text>
-            <p class="text-h3 font-weight-bold text-orange-darken-1">
+            <p class="result-value font-weight-bold text-orange-darken-1">
               {{ formatCurrency(result.totalInterest) }}
             </p>
             <p class="text-caption text-grey-darken-1">複利產生的收益</p>
@@ -380,10 +380,31 @@ const formatCurrency = (value: number): string => {
   gap: 24px;
 }
 
+.result-title {
+  font-size: 1.25rem;
+  font-weight: 500;
+  white-space: normal;
+}
+
+.result-value {
+  font-size: 3rem;
+  line-height: 3.125rem;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 768px) {
   .result-grid {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .result-title {
+    font-size: 1.05rem;
+  }
+
+  .result-value {
+    font-size: 1.75rem;
+    line-height: 2.25rem;
   }
 }
 

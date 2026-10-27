@@ -28,6 +28,8 @@ const productionCsp: Exclude<SecurityHeaders['contentSecurityPolicy'], false | u
 const securityConfig: Partial<ModuleOptions> = {
   nonce: true,
   enabled: true, // 啟用安全機制
+  // 模組用 esbuild.drop 移除 console，Vite 8 會忽略，改在 nuxt.config.ts 用 Oxc 的 dropConsole
+  removeLoggers: false,
   // xss 1.0.16 搭配 nuxt-security 2.6.0 會因 escapeHtml 為 undefined 而讓帶查詢參數的 GET 回 500
   xssValidator: {
     escapeHtml: false,
