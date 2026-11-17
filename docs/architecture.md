@@ -16,7 +16,7 @@ flowchart LR
       API["API Routes<br/>/api/date-records<br/>/api/time-periods<br/>/api/savings-scenarios"]
       ORM["Drizzle ORM<br/>@libsql/client"]
     end
-    ENV["環境變數<br/>GOOGLE_CLIENT_ID/SECRET<br/>NUXT_SESSION_PASSWORD<br/>ALLOWED_EMAILS<br/>SUPER_ADMIN_EMAILS<br/>TURSO_DATABASE_URL<br/>TURSO_AUTH_TOKEN"]
+    ENV["環境變數<br/>GOOGLE_CLIENT_ID/SECRET<br/>NUXT_APP_SECRET<br/>ALLOWED_EMAILS<br/>SUPER_ADMIN_EMAILS<br/>TURSO_DATABASE_URL<br/>TURSO_AUTH_TOKEN"]
   end
 
   U -->|"靜態資源"| CDN

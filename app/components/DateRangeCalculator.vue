@@ -66,6 +66,14 @@
                 <v-tooltip v-if="mdAndUp" activator="parent" location="top" :text="record.title" />
               </span>
               <span class="flex-shrink-0">
+                <v-icon
+                  v-if="record.locked"
+                  color="warning"
+                  size="small"
+                  class="mx-2"
+                  title="已鎖定，無法刪除">
+                  mdi-lock
+                </v-icon>
                 <v-btn
                   icon="mdi-pencil"
                   size="small"
@@ -73,6 +81,7 @@
                   title="編輯"
                   @click="openEditDialog(record)" />
                 <v-btn
+                  v-if="!record.locked"
                   icon="mdi-delete"
                   size="small"
                   color="error"
@@ -234,6 +243,13 @@
           counter
           class="mt-4" />
 
+        <v-switch
+          v-if="isSuperAdmin"
+          v-model="form.locked"
+          label="鎖定（鎖定後不可刪除）"
+          color="warning"
+          hide-details />
+
         <v-alert v-if="submitted && formError" type="error" variant="tonal" class="mt-4">
           {{ formError }}
         </v-alert>
@@ -272,6 +288,7 @@ const getTodayString = (): string => toIsoDate(new Date());
 const { data: savedRecords, isLoading, error: queryError } = useDateRecordsQuery();
 const { mutateAsync: saveToServer, isPending: saving } = useSaveDateRecords();
 const { notify } = useNotify();
+const { isSuperAdmin } = useSuperAdmin();
 
 const records = computed(() => savedRecords.value ?? []);
 
@@ -324,6 +341,7 @@ interface FormState {
   endMode: DateRangeEndMode;
   endDate: string;
   includeStartDay: boolean;
+  locked: boolean;
 }
 
 const createEmptyForm = (): FormState => {
@@ -338,6 +356,7 @@ const createEmptyForm = (): FormState => {
     endMode: 'fixed',
     endDate: today,
     includeStartDay: true,
+    locked: false,
   };
 };
 
@@ -378,6 +397,7 @@ const openEditDialog = (record: DateRecordDto) => {
     endMode: record.endMode,
     endDate: record.endDate ?? getTodayString(),
     includeStartDay: record.includeStartDay,
+    locked: record.locked,
   });
   submitted.value = false;
   dialogOpen.value = true;
@@ -401,6 +421,7 @@ const confirmDialog = async () => {
           endMode: isCountdownForm ? 'fixed' : form.endMode,
           endDate: isCountdownForm || form.endMode === 'fixed' ? form.endDate : null,
           includeStartDay: isCountdownForm ? false : form.includeStartDay,
+          ...(isSuperAdmin.value ? { locked: form.locked } : {}),
         },
       ],
     },

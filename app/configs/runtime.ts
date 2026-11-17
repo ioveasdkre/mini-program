@@ -1,8 +1,6 @@
 const runtimeConfig = {
-  // nuxt-auth-utils：session 以 httpOnly cookie 保存，限制有效期間
+  // nuxt-auth-utils：session 以 httpOnly cookie 保存，限制有效期間（加密金鑰由環境變數 NUXT_APP_SECRET 提供）
   session: {
-    // 型別要求必填，實際值由環境變數 NUXT_SESSION_PASSWORD 提供
-    password: '',
     maxAge: 60 * 60 * 24 * 7,
     cookie: { sameSite: 'lax' as const },
   },

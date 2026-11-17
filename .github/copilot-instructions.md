@@ -4,7 +4,13 @@
 
 Nuxt 4 + Vue 3 + TypeScript + Vuetify 應用程式（SSR 啟用，部署於 Vercel）。這是一個提供多個實用計算器的工具平台（工時計算、存錢計算、日期範圍計算等）。UI 語言為**繁體中文**。
 
-後端使用 Nitro（`server/`）+ Turso（libSQL）儲存資料，Google 登入（`nuxt-auth-utils`）搭配 `ALLOWED_EMAILS` 白名單，未授權者看不到任何頁面。
+後端使用 Nitro（`server/`）+ Turso（libSQL）儲存資料，Google 登入（`nuxt-auth-utils`）搭配 `ALLOWED_EMAILS` 白名單，未授權者看不到任何頁面。`SUPER_ADMIN_EMAILS` 指定最高權限管理員（自動視同白名單）。
+
+### 最高權限管理員
+
+- 後端：需要最高權限的 API 用 `requireSuperAdmin(event)`；同一支 API 內依身分區分行為時用 `isSuperAdminEmail(user.email)`（皆在 `server/utils/auth.ts`）。權限一律以環境變數判斷，不信任前端或 session 傳來的值
+- 前端：用 `useSuperAdmin()` 取得 `isSuperAdmin` 控制畫面顯示（僅 UI 用途，後端必須再檢查）
+- 範例：日期範圍計算器的 `locked` 欄位（只有最高權限可設定，鎖定後不可刪除），見 `server/api/date-records/index.put.ts`
 
 ## 核心架構
 
