@@ -32,6 +32,8 @@ export interface TimePeriodSaveDto {
   id: number;
   periodStart: string;
   name: string | null;
+  // 鎖定後不可刪除，只有最高權限管理員可設定
+  locked: boolean;
   createdBy: string;
   createdAt: string;
 }
@@ -39,6 +41,12 @@ export interface TimePeriodSaveDto {
 export interface TimePeriodSaveInput {
   periodStart: string;
   name?: string;
+  // 僅最高權限管理員可帶入，預設 false
+  locked?: boolean;
+}
+
+export interface TimePeriodLockInput {
+  locked: boolean;
 }
 
 export interface SavingsScenarioInput {

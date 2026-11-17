@@ -18,6 +18,7 @@ const SCHEMA = [
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     period_start TEXT NOT NULL,
     name TEXT,
+    locked INTEGER NOT NULL DEFAULT 0 CHECK (locked IN (0, 1)),
     created_by TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
@@ -54,6 +55,17 @@ const migrateDateRanges = async (db: Client): Promise<void> => {
   }
 };
 
+const migrateTimePeriodSaves = async (db: Client): Promise<void> => {
+  const columns = await db.execute("SELECT name FROM pragma_table_info('time_period_saves')");
+  const existing = new Set(columns.rows.map(row => String(row['name'])));
+
+  if (!existing.has('locked')) {
+    await db.execute(
+      'ALTER TABLE time_period_saves ADD COLUMN locked INTEGER NOT NULL DEFAULT 0 CHECK (locked IN (0, 1))',
+    );
+  }
+};
+
 let ready: Promise<Client> | undefined;
 
 const initDb = async (): Promise<Client> => {
@@ -69,6 +81,7 @@ const initDb = async (): Promise<Client> => {
   });
   await db.batch(SCHEMA, 'write');
   await migrateDateRanges(db);
+  await migrateTimePeriodSaves(db);
   return db;
 };
 

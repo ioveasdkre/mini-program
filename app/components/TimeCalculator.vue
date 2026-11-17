@@ -244,6 +244,14 @@
             hide-details />
         </v-col>
         <v-col cols="12" md="7" class="d-flex flex-wrap align-center ga-3">
+          <v-switch
+            v-if="isSuperAdmin"
+            v-model="saveLocked"
+            label="鎖定"
+            color="warning"
+            density="compact"
+            inset
+            hide-details />
           <v-btn
             color="success"
             prepend-icon="mdi-content-save"
@@ -266,6 +274,15 @@
           @click="jumpToPeriod(item.periodStart)">
           <template #append>
             <v-btn
+              v-if="isSuperAdmin"
+              :icon="item.locked ? 'mdi-lock' : 'mdi-lock-open-variant-outline'"
+              :color="item.locked ? 'warning' : 'grey'"
+              :title="item.locked ? '已鎖定，點擊解鎖' : '點擊鎖定'"
+              size="small"
+              variant="text"
+              @click.stop="toggleLock(item.id, !item.locked)" />
+            <v-btn
+              v-if="!item.locked"
               icon="mdi-delete"
               size="small"
               color="error"
@@ -290,8 +307,12 @@ const focusedDate = ref<Date | null>(null);
 const { data: savedPeriods, isLoading: loadingSaved } = useTimePeriodsQuery();
 const { mutateAsync: createPeriod, isPending: savingPeriod } = useCreateTimePeriod();
 const { mutateAsync: removePeriod } = useRemoveTimePeriod();
+const { mutateAsync: setPeriodLock } = useToggleTimePeriodLock();
 const { notify } = useNotify();
+const { user } = useUserSession();
+const isSuperAdmin = computed(() => user.value?.isSuperAdmin === true);
 const saveName = ref('');
+const saveLocked = ref(false);
 
 const toIsoDate = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
@@ -307,8 +328,10 @@ const savePeriod = async () => {
     await createPeriod({
       periodStart: toIsoDate(selectedPeriod.value.startDate),
       name: saveName.value.trim() || undefined,
+      ...(isSuperAdmin.value ? { locked: saveLocked.value } : {}),
     });
     saveName.value = '';
+    saveLocked.value = false;
     notify('已儲存');
   } catch (error) {
     notify(getErrorMessage(error), 'error');
@@ -323,6 +346,15 @@ const removeSavedPeriod = async (id: number) => {
   try {
     await removePeriod(id);
     notify('已刪除');
+  } catch (error) {
+    notify(getErrorMessage(error), 'error');
+  }
+};
+
+const toggleLock = async (id: number, locked: boolean) => {
+  try {
+    await setPeriodLock({ id, locked });
+    notify(locked ? '已鎖定' : '已解鎖');
   } catch (error) {
     notify(getErrorMessage(error), 'error');
   }

@@ -5,7 +5,12 @@ export default defineOAuthGoogleEventHandler({
     }
 
     await setUserSession(event, {
-      user: { email: user.email, name: user.name ?? user.email, picture: user.picture },
+      user: {
+        email: user.email,
+        name: user.name ?? user.email,
+        picture: user.picture,
+        isSuperAdmin: isSuperAdminEmail(user.email),
+      },
     });
     return sendRedirect(event, '/');
   },

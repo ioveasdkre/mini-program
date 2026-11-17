@@ -10,6 +10,11 @@ export default defineEventHandler(async event => {
 
   const session = await getUserSession(event);
   if (session.user && isAllowedEmail(session.user.email)) {
+    // 環境變數調整後，同步更新既有 session 的管理員旗標
+    const isSuperAdmin = isSuperAdminEmail(session.user.email);
+    if (session.user.isSuperAdmin !== isSuperAdmin) {
+      await setUserSession(event, { user: { ...session.user, isSuperAdmin } });
+    }
     return;
   }
 
